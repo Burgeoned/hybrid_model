@@ -65,31 +65,52 @@ bench is moderately below average. the word "moderately" is rho = 0.40.
 
 **where 0.40 comes from:**
 
-it's an informed estimate, not a measured value. here's the reasoning:
+it's an informed estimate, not a measured value. the reasoning chains through body
+composition, which is the best-studied mediating variable between the two.
 
-1. body mass correlates with bench press. heavier people bench more, all else equal.
-   this is partly mechanical (more muscle tissue, longer moment arms for some people),
-   partly just that bigger humans have more total muscle.
+**the body composition chain (best available indirect evidence):**
 
-2. body mass negatively correlates with running economy. the Di Prampero / Daniels
-   work establishes this for aerobic cost. for race performance, the effect is real
-   but partially offset by longer stride length in taller/heavier runners.
+1. bench press correlates strongly with fat-free mass. a 2022 study (PMC8997733)
+   found that 1RM for upper-body compound lifts explained ~45-55% of variance in
+   fat-free mass in trained males (r ≈ 0.67-0.74).
 
-3. the correlation between bench and run time is therefore indirect: bench -- body mass
-   -- running economy -- 5K time. it's mediated by body composition, not direct.
+2. fat-free mass index (FFMI) negatively predicts running speed. Treff et al. (2019),
+   a cross-sectional study of 3,067 recreational runners with DEXA body composition
+   measurements, found FFMI in the highest quartile (>20 kg/m²) was associated with
+   the slowest times. the body-composition model explained 29.8% of variance in male
+   running speed. a companion longitudinal paper (Treff et al., 2019, PMC6471649)
+   found that increases in fat mass index predicted deterioration of running speed.
 
-4. mediated correlations are weaker than direct ones. if bench and mass correlate at
-   ~0.60, and mass and run time correlate at ~0.50, the bench-to-run path is roughly
-   0.60 x 0.50 = 0.30. add some direct muscle-mass-to-economy effect and you get
-   somewhere in the 0.30-0.50 range.
+3. chaining these two correlations: bench → FFMI (r ≈ 0.70) × FFMI → run speed
+   (r ≈ -0.50 in men) implies a bench-to-run-time correlation of roughly **0.30-0.40**
+   via body composition alone. add any direct muscle-mass-to-economy effect and
+   the upper bound is around 0.45.
 
-5. we picked 0.40 as the midpoint of that range.
+**what other data sources suggest:**
 
-this is the weakest part of the model. we're working from mediated reasoning, not
-measured data. the rho sweep (0.10 to 0.70) in the notebook shows how sensitive the
-hybrid count is to this assumption. the finding -- that the joint probability is
-meaningfully less than independence assumes -- is robust across the whole range.
-the exact hybrid tax percentage is not.
+- military data (ROTC cadets, PMC11042848): VO2max correlated with deadlift r = 0.25
+  and with 2-mile run r = 0.61. chaining through VO2max as a common factor implies
+  a deadlift-to-run-time correlation of roughly 0.25 × 0.61 = **0.15** in that
+  fitness-selected population. bench and deadlift track together, so this sets a
+  lower bound on the plausible range.
+
+- concurrent training interference (Huiberts et al., 2024 meta-analysis): the
+  interference effect on upper body strength is small (g ≈ -0.20 to -0.30 in trained
+  males, negligible in females). this means dedicated hybrid athletes can perform
+  well at both, which pulls the *observed* cross-sectional correlation down from
+  what the body-composition chain alone would predict.
+
+**revised defensible range: 0.20-0.40.**
+
+0.40 is the upper bound supported by the body composition chain. 0.20 is a reasonable
+lower bound given the military data and the modest interference effect. we set
+rho = 0.40 as the baseline (upper bound), which is conservative in the direction of
+overstating the hybrid tax. the rho sweep covers 0.10-0.70; the highlighted
+plausible range in the chart is 0.20-0.40.
+
+this is the weakest part of the model. we're working from indirect chains, not
+measured data. no peer-reviewed study directly pairs bench press 1RM with 5K time.
+the rho sweep is the honest answer to that uncertainty.
 
 **the sign of rho:**
 
@@ -198,25 +219,32 @@ before the hybrid joint numbers are final.
 **rho is the biggest unknown.** everything else in this model -- the log-normal
 assumption, the distributions, the bivariate normal structure -- is well-grounded
 in theory and data. the correlation coefficient is not. we estimated it from
-indirect reasoning and literature on mediated relationships. a measured rho from
-a real dataset pairing bench and 5K would substantially change the confidence
-we have in the hybrid counts. until that data exists, the rho sweep is the honest
-answer: here's how the hybrid tax changes across the plausible range.
+indirect evidence: the body-composition chain implies 0.30-0.40; military fitness
+data implies a lower bound around 0.15. the plausible range is 0.20-0.40. the rho
+sweep covers 0.10-0.70 and the finding that the hybrid tax is real and meaningful
+is robust across the full range. the exact percentage is not.
 
 **no dataset pairs bench and 5K at scale.** this is the fundamental limit of the
-model. the entire reason we use a copula / bivariate normal instead of just looking
-at paired data is that paired data doesn't exist in a form we can use. CrossFit
-and Hyrox have partial data but severe selection bias. the general-population
-correlation between barbell bench and 5K time has not been measured.
+model. paired data doesn't exist in a form we can use. CrossFit and Hyrox have
+partial data but severe selection bias (people who specifically train for both are
+not representative of the gym-going / running population). the general-population
+correlation between barbell bench and 5K time has not been measured. this is a
+genuine gap in the sports science literature.
 
 **the casual gym-goer distribution may understate the interference.** the NSCA
 normative data represents all gym-goers, including people who don't run at all.
-among people who actively do both sports, the negative correlation is probably
-stronger (they've had to make tradeoffs, their training reflects compromises).
-among the general gym-going / casual-running population, many people do one and
-not the other, which weakens the observed correlation. rho = 0.40 might be right
-for the full population, too low for "hybrid athletes specifically," and too high
-for "random person who sometimes lifts and sometimes jogs."
+among people who actively do both sports, rho might be higher (they've had to make
+explicit tradeoffs). among the general population, many people do one and not the
+other, which weakens the observed correlation. rho = 0.40 as the upper bound is
+the conservative assumption -- it errs toward overstating the hybrid tax.
+
+**the Gaussian copula has zero tail dependence.** this is a structural limitation.
+the Gaussian copula's dependence erodes to zero as both variables push toward the
+extreme tails, even at rho = 0.40. for the bench 405 + sub-14:50 pair (99th+
+percentile in both), a Gumbel copula -- which has positive upper-tail dependence --
+would be more theoretically appropriate and would likely produce a *lower* hybrid
+tax. we use Gaussian because it's tractable and interpretable; Gumbel would be
+the next step for anyone stress-testing the tail estimates.
 
 **we're modeling the marginals, not the training interaction.** the bivariate normal
 captures where people currently sit on both dimensions. it does not model the
@@ -225,19 +253,18 @@ the interference effect literature (Hickson 1980, Wilson et al. 2012). our model
 asks "how many people are simultaneously in both top tails right now" -- a snapshot,
 not a training recommendation.
 
-**log-normal in the tails.** the bivariate normal is exact given the distributional
-assumption. but at bench 405 + sub-14:50 we're in the extreme tails of both
-distributions, where log-normal fits are most likely to be wrong. EVT distributions
-(Gumbel, Frechet) would be more theoretically appropriate. without raw individual
-data to fit them, we use log-normal and note the caveat.
+**log-normal in the tails.** at bench 405 + sub-14:50 we're in the extreme tails
+of both distributions, where log-normal fits are least reliable. this compounds
+the Gaussian copula limitation above. treat the tail estimates as order-of-magnitude
+rather than precise. bench 225 / sub-19:03 is in the 97th-98th percentile and the
+log-normal fit is much better grounded there.
 
-**rho is assumed constant across the range.** in reality, the correlation between
-bench and run probably varies by fitness level. elite hybrid athletes (people who
-are very good at both) might have weaker negative correlation because they've
-specifically optimized for both. people in the middle of both distributions might
-show stronger interference effects because they haven't adapted to the dual demand.
-a constant rho across the whole bivariate distribution is a structural limitation
-of the Gaussian copula approach.
+**rho is assumed constant across the range.** a constant rho across the whole
+bivariate distribution is a structural limitation of the Gaussian copula. in
+reality the correlation likely varies: elite hybrid athletes in the top of both
+distributions may have weaker interference (they've specifically optimized for
+both), while mid-distribution people may show stronger effects. a varying-rho
+model would require the paired dataset that doesn't yet exist.
 
 ---
 
@@ -264,13 +291,41 @@ review -- a practical reading list for someone who wants to stress-test the rho 
 - Fletcher JR et al. (2009). Muscle mechanics and neuromuscular control of locomotion.
   J R Soc Interface 6(33):439-55.
 
-**why no direct bench/run correlation paper exists (the gap):**
-- concurrent training research focuses on outcomes (does adding running hurt bench gains?)
-  not on cross-sectional correlation (how correlated are bench and run in the population?).
-- CrossFit research (e.g. Butcher SJ et al.) uses CrossFit-specific metrics, not 5K
-  time and barbell bench as separate isolated tests.
-- the closest thing is body composition research showing muscle mass / running economy
-  tradeoffs, which is what we're reasoning from indirectly.
+**body composition as the mediating variable (indirect rho evidence):**
+- Treff M et al. (2019). Running performance in a timed city run and body composition:
+  a cross-sectional study in more than 3,000 runners. Nutrition (2019).
+  FFMI explains 29.8% of variance in male running speed; Q4 FFMI associated with
+  slowest times. the key study linking fat-free mass to 5K performance.
+- Treff M et al. (2019). Fat mass index predicts deterioration of running speed.
+  PMC6471649. longitudinal companion -- mass gain tracks with speed loss.
+- PMC8997733 (2022). 1RM upper-body compound lifts explain ~45-55% of fat-free mass
+  variance in trained males (r ≈ 0.67-0.74). the link from bench to body composition.
+
+**upper body strength and running (scoping review):**
+- Curovic D et al. (2024). Potential importance of maximal upper body strength for
+  high-intensity running and jumping. Sports 12(12):357. PMC11679821.
+  screened 4,730 articles; only 7 met inclusion for distance running. upper body
+  strength correlates with sprint speed but no studies on 5K or distance running.
+  confirms the literature gap.
+
+**military fitness data (lower bound on rho):**
+- PMC11042848 (2024). VO2max as predictor of ACFT total score in ROTC cadets.
+  VO2max x deadlift r = 0.25; VO2max x 2-mile run r = 0.61. implies deadlift-to-run
+  correlation of ~0.15 via VO2max. sets the lower bound of the plausible rho range.
+
+**updated concurrent training meta-analyses:**
+- Huiberts et al. (2024). Concurrent strength and endurance training meta-analysis.
+  VU Amsterdam. interference small in trained males (g ≈ -0.25), negligible in
+  females and upper body. more recent and nuanced than Wilson 2012.
+- Schumann et al. (2022). No significant hypertrophy differences when frequency/
+  volume matched between concurrent and resistance-only training.
+
+**why no direct bench/run correlation paper exists:**
+- concurrent training research focuses on training outcomes (does adding running hurt
+  bench gains?), not on cross-sectional population correlation.
+- CrossFit research uses WOD-specific metrics, not isolated bench 1RM and 5K.
+- the best available evidence is the body-composition chain, which implies rho ≈ 0.30-0.40
+  for general adults. military data implies lower values (0.15) in fitness-selected groups.
 
 if you know of a study with paired bench 1RM and 5K time data in a non-CrossFit
 population, that paper would substantially sharpen the rho estimate. we don't have one.
