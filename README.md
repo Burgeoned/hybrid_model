@@ -49,10 +49,7 @@ correlation (rho) from −0.15 (fitness wins) to +0.30 (size wins) and reports t
 | `hybrid_model.ipynb` | the model |
 | `METHODOLOGY.md` | full methodology, every study checked, corrections logged |
 | `DESIGN.md` | the design contract and change history |
-| `REEL_SCRIPT.md` | the shootable script |
-| `render_hybrid_anim.py` | renders the seven reel clips |
 | `01`–`04_*.png` | working charts |
-| `_archive/` | v1 (mass-only) script, notebook, renderer and clips |
 
 ---
 

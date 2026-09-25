@@ -96,8 +96,6 @@ permanently.
 | `02_hybrid_scatter.png` | joint cloud under fitness-wins vs size-wins |
 | `03_rho_sweep.png` | 1-in-N vs rho, −0.30 to +0.50 |
 | `04_robustness.png` | why 315/405 don't ship |
-| `render_hybrid_anim.py` | the seven reel clips `anim_1`–`anim_7` |
-| `REEL_SCRIPT.md` | the shootable script |
 
 ## Next step that would actually settle it
 
