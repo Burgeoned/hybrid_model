@@ -1,0 +1,46 @@
+# Local-only: authoring + reel machinery, not published.
+# Mirrors joint_load_model/.gitignore — the notebook, its inputs and the
+# methodology are the shareable experiment; the reel pipeline stays on this machine.
+REEL_SCRIPT.md
+EDIT_NOTES.md
+render_hybrid_anim.py
+build_edit.py
+make_broll.py
+make_captions.py
+make_cover.py
+make_overlays.py
+yunvo_brand.py
+broll/
+_archive/
+*.mp4
+*.mov
+*.MOV
+*.srt
+_transcript.json
+hook_*.png
+overlay_*.png
+panel_*.png
+cover_*.png
+_still_*.png
+*.bak*
+fonts/
+
+# Licensed/OFL fonts must never land in a public repo.
+*.ttf
+*.otf
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
