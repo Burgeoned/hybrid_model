@@ -1,73 +1,107 @@
-# hybrid_model — Part 2 design doc
+# hybrid_model — design doc (v5)
 
-**The question:** what fraction of people worldwide can bench 225 AND run sub-19:03 at the same time?
+## The question
 
-**Why it's not just bench × run:**
-Muscle mass helps bench, slows your 5K. Endurance training caps strength gains. The two are
-negatively correlated — rho ≈ −0.40 in log-space based on sports science literature. So the
-joint probability is smaller than independence assumes. That gap is the "hybrid tax."
+**Among men who lift and run, how many can bench 225 AND run a sub-19 (19:00) 5K?**
 
----
+## The answer this model gives
 
-## Foundation already built
+| scenario | rho | 1 in N can do both (central) | 95% range |
+|---|---|---|---|
+| fitness wins | −0.15 | 65 | 41–118 |
+| just multiply | 0.00 | ~100 | 59–192 |
+| size wins | +0.30 | 320 | 162–800 |
 
-`run_model/run_world_model.ipynb` cells `d655dd72` and `5552149d` already contain:
-- `exact_joint()` — analytical bivariate normal CDF (no MC starvation in tails)
-- `PAIRS` — matched bench/run milestones: 225/19:03, 315/15:35, 405/14:50
-- Hexbin scatter + rho sensitivity sweep chart (`07_hybrid_rarity.png`)
-- Hybrid tax table printed for all three milestone pairs
-
-Do NOT rewrite this from scratch. Copy those cells into this notebook as the starting point.
+**Somewhere between 1 in 65 and 1 in 320** — even the generous end is ~5× rarer than sub-19 alone. The model does not pick a winner, because the
+evidence doesn't.
 
 ---
 
-## Bench counts to use
+## Why it can't be more precise — the design constraint
 
-Use `sbd_final/sbd_final_results.csv` — NOT bench_world_model. run_model used
-bench_world_model (9.27M for 225) but sbd_final has been refreshed since:
-- bench 225: **10.28M**
-- bench 315: **1.18M**
-- bench 405: **0.135M**
+1. **Two separate datasets.** Bench comes from a gym-goer distribution, 5K from a
+   regular-runner distribution. No person is in both, so the data can't estimate how
+   strength and speed relate.
+2. **No bodyweight on the running side.** Body mass is the variable that links the two, and
+   the running data doesn't record it.
+3. **Outside studies disagree on the sign.** Mass pulls the two apart (Herrmann 2019). Fitness
+   pulls them together (ROTC/ACFT 2024). Nobody has measured bench vs 5K in the same people.
 
-Re-run the inverse lookup for run equivalents against these updated counts before finalizing.
-Run times will shift slightly slower (more people can bench now → need a faster run time to match).
-
----
-
-## Reel structure (Part 2)
-
-Hook: "bench 225 and run sub-19 at the same time — how many people can actually do both?"
-
-The counterintuitive beat: "not bench_prob × run_prob — they fight each other."
-Show the hybrid tax visually: independence bar vs actual joint bar, gap labeled as %.
-
-Visual sequence:
-1. Bench curve + run curve side by side (from `10_equivalence_scoreboard.png` as b-roll)
-2. Hexbin scatter — zoom into top-left corner where hybrids live
-3. Hybrid tax bar chart — one bar "if independent", one bar "actual", gap highlighted
-4. Rho sensitivity sweep — shows the answer is robust to the correlation assumption
-5. Number reveal: ~X million people worldwide (to be computed with updated sbd_final counts)
-
-Sign-off: "if that's you — you're genuinely one of the rarest combinations of athlete on earth."
+So rho is reported as scenarios, never as a point estimate.
 
 ---
 
-## Key parameters
+## Change history
 
-- Distribution: log-normal for both, same params as run_model
-- Correlation: rho = −0.40 (negative — more muscle = slower 5K)
-  - Sensitivity range: −0.25 to −0.55, results robust across this range
-- Method: analytical bivariate normal (`scipy.stats.multivariate_normal`)
-  - MC starvation is a real problem in the joint tails — do NOT use MC for the estimates
-- Denominator: same 4.1B (18-65 population)
+**2026-09-22 — v6 (basis C).** Run median fixed back to Part 1's 26.5: the 26.5-28.5 range
+was justified by parkrun's global all-finisher average, which includes women and walkers
+worldwide, while the percentile table is mostly UK/Australian men — that was double-counting
+a regional adjustment. Added a provenance beat to the reel and replaced the CTA with an
+UNDER LOAD series sign-off. Result: 1 in 65 / ~100 / 320.
+
+**2026-09-22 — v5 (script review).** Status-led story; threshold 19:00 (was Part 1's
+19:03); scenario renamed "mass wins" → "size wins" to match the script; payoff changed from
+the tautological "rarer than either alone" to "~5× rarer than sub-19 alone." Result:
+1 in 87 / 130 / 480.
+
+**2026-09-22 — v3.** Inputs traced to the portfolio and moved into `hybrid_inputs.py`, which
+the notebook and renderer share. Bench now comes from `sbd_final` for the parkrun footprint
+(North America, Europe, Oceania) instead of the North America row alone. The run median is
+carried as 26.5–28.5 min, because outside anchors lean slower than Part 1's 26.5. Every
+input range is Monte Carlo'd (20,000 runs). Result: 1 in 85 / 130 / 470, up from
+54 / 80 / 242. v2 assets are in `_archive/v2_na_only/`.
+
+**2026-09-20 — v2.** v1 reported "1 in 13 becomes 1 in 40, at least twice as rare" at a
+rho = 0.30 baseline with a 0.20–0.40 "defensible range." A source check found:
+
+- the ROTC study was used as the range's lower bound with its **sign reversed**. ACFT events
+  are scored in points, so fitter cadets were stronger *and* faster, which is evidence for
+  negative rho.
+- Herrmann 2019 used bioelectrical impedance, not DEXA, and its r = −0.50 describes the
+  top-muscle quartile rather than a linear trend.
+- PMC8997733 is n = 30 and measures upper-limb fat-free mass, not whole-body FFMI.
+- the parkrun percentile table and the NSCA 163 lb median could not be traced to an
+  original table.
+
+v1 assets are in `_archive/`.
+
+**2026-09-15 — v1.** The original design multiplied the joint probability by a 4.1B world
+population. The joint is conditional on being in both reference populations, so that
+overstated by ~45x and implied 95% of 225-benchers also run sub-19. Counts were cut
+permanently.
 
 ---
 
-## Output charts needed
+## Standing rules
 
-| File | Description |
+- **Shares are the product.** Everything headline is 1-in-N among men who lift and run.
+- **One count is allowed, as an order of magnitude.** "Tens of thousands of men in N.
+  America, Europe and Oceania" (span 19k-278k). Never a precise figure: it rests on an
+  unmeasured overlap between lifting and running habits. Counts use the `sbd_final`
+  16-70 population base, not `run_model`'s (which re-applied an adult fraction).
+- **The joint is always analytical** (Gaussian copula). MC only varies the inputs and draws pixels.
+- **315 and 405 stay out of public content.** Across the same rho span, 225 swings 5x,
+  315 swings 34x, 405 swings 133x.
+- **Say where the numbers come from.** Bench is OpenPowerlifting via `sbd_final`; 5K is parkrun via Part 1.
+- **Male only.** No usable rho for women.
+
+---
+
+## Outputs
+
+| File | What |
 |---|---|
-| `01_hybrid_scatter.png` | Hexbin joint distribution, milestone lines, hybrid region highlighted |
-| `02_hybrid_tax.png` | Grouped bars: independent vs joint for 225/315/405 |
-| `03_rho_sweep.png` | Joint probability vs rho for bench 225 / sub-19:03 |
-| `04_hybrid_reveals.png` | Clean number cards — how many people worldwide per pair |
+| `hybrid_model.ipynb` | the model — scenarios, sweep, robustness |
+| `01_scenarios.png` | the headline: three scenarios as 1-in-N |
+| `02_hybrid_scatter.png` | joint cloud under fitness-wins vs size-wins |
+| `03_rho_sweep.png` | 1-in-N vs rho, −0.30 to +0.50 |
+| `04_robustness.png` | why 315/405 don't ship |
+| `render_hybrid_anim.py` | the seven reel clips `anim_1`–`anim_7` |
+| `REEL_SCRIPT.md` | the shootable script |
+
+## Next step that would actually settle it
+
+Paired data: the same person's bench 1RM and 5K time. The reel's CTA asks for it in the
+comments. A few hundred usable pairs would estimate rho directly for self-selected
+hybrid athletes. That's biased, but it's the first direct measurement, and it would be
+Part 3.

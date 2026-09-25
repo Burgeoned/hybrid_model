@@ -1,24 +1,44 @@
 # hybrid_model
 
-**Part 2.** How many people worldwide can bench 225 AND run sub-19:03 at the same time?
-
-The answer is not `P(bench) x P(run)`. That math assumes the two are independent.
-They're not -- muscle mass helps bench, slows your 5K. The joint probability is smaller
-than independence predicts. We call that gap the **hybrid tax**.
-
-This repo quantifies the tax using an analytical bivariate normal in log-space and
-sweeps the key assumption (the correlation rho) to show how robust the finding is.
+**Part 2.** Among men who lift and run, how many can bench 225 **and** run a sub-19 (19:00) 5K?
 
 ---
 
 ## the short answer
 
-bench 225 alone: ~0.23% of people worldwide  
-sub-19:03 alone: ~0.22% of people worldwide  
-both simultaneously (rho = 0.40): roughly 30-40% less likely than independence assumes
+among **men who lift and run regularly**:
 
-the exact hybrid count is in the notebook once the PAIRS run times are updated
-against sbd_final bench counts (see DESIGN.md and METHODOLOGY.md).
+| | central | 95% range |
+|---|---|---|
+| bench 225 | **1 in 7** | 1 in 5 to 1 in 11 |
+| sub-19:00 5K | **1 in 13** | 1 in 10 to 1 in 22 |
+| both, if you just multiply | **~1 in 100** | 1 in 59 to 1 in 192 |
+| both, if fitness wins | **1 in 65** | 1 in 41 to 1 in 118 |
+| both, if size wins | **1 in 320** | 1 in 162 to 1 in 800 |
+
+**Somewhere between 1 in 65 and 1 in 320.** Even the generous end is ~5× rarer than sub-19 alone. Multiplying lands in the middle, and it's only
+right if the two forces below cancel out exactly.
+
+---
+
+## why there isn't one number
+
+**The two datasets never meet.** The bench distribution is from gym-goers, the 5K
+distribution from regular runners. No person is in both, so the data can't say how strength
+and speed relate in the same body. The running data also has no bodyweight, which is the
+variable that connects them.
+
+**The outside evidence points both ways:**
+
+- **Muscle mass pulls them apart.** Herrmann et al. 2019: 1,771 men at a timed city run in
+  Geneva, body composition by bioelectrical impedance. The most-muscular quarter (FFMI
+  > 20 kg/m²) ran slowest, r = −0.50.
+- **Fitness pulls them together.** ROTC/ACFT study 2024 (PMC11042848): 64 cadets. VO2max
+  correlated +0.25 with trap-bar deadlift and +0.61 with 2-mile run, both scored in points.
+  Fitter cadets were stronger *and* faster.
+
+No study measures bench 1RM against 5K time in the same people. So the model runs the
+correlation (rho) from −0.15 (fitness wins) to +0.30 (size wins) and reports the range.
 
 ---
 
@@ -26,52 +46,45 @@ against sbd_final bench counts (see DESIGN.md and METHODOLOGY.md).
 
 | file | what it is |
 |---|---|
-| `hybrid_model.ipynb` | main notebook -- distributions, bivariate normal, hybrid tax, rho sweep |
-| `METHODOLOGY.md` | how the model works, where rho comes from, caveats, research refs |
-| `DESIGN.md` | reel structure and next steps for Part 2 production |
+| `hybrid_model.ipynb` | the model |
+| `METHODOLOGY.md` | full methodology, every study checked, corrections logged |
+| `DESIGN.md` | the design contract and change history |
+| `REEL_SCRIPT.md` | the shootable script |
+| `render_hybrid_anim.py` | renders the seven reel clips |
+| `01`–`04_*.png` | working charts |
+| `_archive/` | v1 (mass-only) script, notebook, renderer and clips |
 
 ---
 
-## the key technical decision
+## method
 
-Monte Carlo fails in the joint tails. at bench 315 + sub-15:35, even 500k MC trials
-gave ~7 hits -- Poisson variance that wide makes the estimate useless. we switched
-to an analytical approach: because both distributions are log-normal, log(bench) and
-log(run_time) are jointly normal in log-space. `scipy.stats.multivariate_normal`
-gives the exact joint CDF to machine precision.
+Both marginals are log-normal, so log(bench) and log(5K time) are jointly normal in log-space.
+`scipy.stats.multivariate_normal` gives the joint CDF exactly:
 
 ```python
-from scipy.stats import multivariate_normal
-mean = [log(bench_median), log(run_median)]
-cov  = [[bench_sig**2,              rho * bench_sig * run_sig],
-        [rho * bench_sig * run_sig,  run_sig**2              ]]
-rv   = multivariate_normal(mean, cov)
-
-# P(bench >= target AND run <= target)
-p_joint = p_run - rv.cdf([log(bench_target), log(run_target)])
+cov = [[b_sig**2,            rho * b_sig * r_sig],
+       [rho * b_sig * r_sig, r_sig**2           ]]
+rv  = multivariate_normal([log(b_med), log(r_med)], cov)
+p_both = p_run - rv.cdf([log(225), log(19.05)])
 ```
 
----
-
-## data sources
-
-running distributions: Parkrun 2023 global report (parkrun.com/statistics)  
-lifting distributions: NSCA normative data (casual), OpenPowerlifting (competitive)  
-bench world counts: sbd_final model (Jul 2026, 10.28M for bench 225)  
-population denominator: UN WPP 2022, ages 18-65 (4.1B)  
-rho assumption: concurrent training literature -- see METHODOLOGY.md
+The joint probability is always analytical. Monte Carlo is used for two things only: varying the
+inputs within their ranges (for the 95% intervals) and drawing scatter pixels. Sampling the joint
+directly starves in the tails.
 
 ---
+
+## known limits
+
+- **rho is unmeasured, including its sign.** That's the headline caveat, not a footnote.
+- **Inputs come from the portfolio's own models** (`hybrid_inputs.py`): bench from `sbd_final`
+  (OpenPowerlifting shape, slid to gym-goer medians for North America, Europe and Oceania),
+  5K from Part 1's parkrun percentiles, used as published (male median 26.5 min; only the
+  spread is varied).
+- **The intersection is assumed to look like each parent.** People who both lift and run
+  probably bench less than pure lifters. That's unmodelled.
+- **Male only.** 315 and 405 pairs are too rho-sensitive to publish.
 
 ## reproduce
 
-1. `pip install numpy pandas matplotlib scipy`
-2. open `hybrid_model.ipynb`, run all cells top to bottom
-3. update PAIRS run times against sbd_final counts before final figures (see TODO cell)
-
----
-
-## part 1
-
-[run_model](https://github.com/Burgeoned/run_model) -- the running equivalent of bench 225.
-same methodology, single-sport rarity. sub-19:03 matches bench 225 at 9.2M people worldwide.
+`pip install numpy matplotlib scipy` · run the notebook top to bottom.
